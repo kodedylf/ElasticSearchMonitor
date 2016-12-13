@@ -1,0 +1,1 @@
+Small project to monitor an ElasticSearch log looking for new entries that match certain criteria. When a new log entry is found, an 'A' is sent to the serial port where an Arduino is listening for that an does interesting things when it arrives.
