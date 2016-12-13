@@ -25,36 +25,46 @@ namespace ElasticSearchMonitor
         }
         static void Main(string[] args)
         {
-            DateTime latestPurchaseApproval = new DateTime(1000, 1, 1);
-            // var settings = new ConnectionSettings(new Uri(@"http://wx0855:9200")).DefaultIndex("engine-syst");
-            var settings = new ConnectionSettings(new Uri(@"http://y01089:9200")).DefaultIndex("engine-prod");
-            var client = new ElasticClient(settings);
-            var serialPort = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
-            serialPort.Open();
-
-            while (true)
+            if (args[0] == "test")
             {
-                var response = client.Search<Logevent>(s => s
-                                        .AllTypes()
-                                        .Sort(ss => ss.Descending(p => p.timestamp))
-                                        .Size(1)
-                                        .Query(q => q.Term(p => p.fields.method, "Decision.Flow.ApplicationService.MakeDecisionApplicationService.MakeDecision")));
-                var entry = response.Documents.First();
-                if (latestPurchaseApproval.Year == 1000)
+                var serialPort = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
+                serialPort.Open();
+                serialPort.Write(Encoding.ASCII.GetBytes("A"), 0, 1);
+                serialPort.Close();
+            }
+            else
+            {
+                DateTime latestPurchaseApproval = new DateTime(1000, 1, 1);
+                // var settings = new ConnectionSettings(new Uri(@"http://wx0855:9200")).DefaultIndex("engine-syst");
+                var settings = new ConnectionSettings(new Uri(@"http://y01089:9200")).DefaultIndex("engine-prod");
+                var client = new ElasticClient(settings);
+                var serialPort = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
+                serialPort.Open();
+
+                while (true)
                 {
-                    latestPurchaseApproval = entry.timestamp;
-                }
-                else
-                {
-                    if (entry.timestamp > latestPurchaseApproval)
+                    var response = client.Search<Logevent>(s => s
+                                            .AllTypes()
+                                            .Sort(ss => ss.Descending(p => p.timestamp))
+                                            .Size(1)
+                                            .Query(q => q.Term(p => p.fields.method, "Decision.Flow.ApplicationService.MakeDecisionApplicationService.MakeDecision")));
+                    var entry = response.Documents.First();
+                    if (latestPurchaseApproval.Year == 1000)
                     {
-                        Console.WriteLine("Yay! New purchase approval at {0}",
-                            entry.timestamp.ToString("yyyy-MM-dd HH.mm.ss"));
                         latestPurchaseApproval = entry.timestamp;
-                        serialPort.Write(Encoding.ASCII.GetBytes("A"), 0, 1);
                     }
+                    else
+                    {
+                        if (entry.timestamp > latestPurchaseApproval)
+                        {
+                            Console.WriteLine("Yay! New purchase approval at {0}",
+                                entry.timestamp.ToString("yyyy-MM-dd HH.mm.ss"));
+                            latestPurchaseApproval = entry.timestamp;
+                            serialPort.Write(Encoding.ASCII.GetBytes("A"), 0, 1);
+                        }
+                    }
+                    Thread.Sleep(10000);
                 }
-                Thread.Sleep(10000);
             }
         }
     }
