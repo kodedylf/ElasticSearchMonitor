@@ -25,7 +25,7 @@ namespace ElasticSearchMonitor
         }
         static void Main(string[] args)
         {
-            if (args[0] == "test")
+            if ((args.Length > 0) && (args[0] == "test"))
             {
                 var serialPort = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
                 serialPort.Open();
